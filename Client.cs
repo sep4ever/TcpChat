@@ -4,7 +4,7 @@ namespace Chat;
 
 public class Client
 {
-    public event System.Action<string> OnDataRead;
+    public event Action<string>? OnDataRead;
     private TcpClient client;
     public void Connect(string address)
     {
@@ -16,7 +16,7 @@ public class Client
     {
         NetworkStream stream = client.GetStream();
 
-        Byte[] data = Encoding.UTF8.GetBytes(message);
+        var data = Encoding.UTF8.GetBytes(message);
         await stream.WriteAsync(data, 0, data.Length);
     }
 
@@ -32,8 +32,8 @@ public class Client
             if (count == 0)
                 break;
             string text = Encoding.UTF8.GetString(bytes, 0, count);
+
             OnDataRead?.Invoke(text);
-            //Console.WriteLine("Client sent: " + text);
         }
     }
 

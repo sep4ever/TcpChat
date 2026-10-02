@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-using Chat;
+﻿using Chat;
 
 Server server = new();
 
@@ -14,18 +12,17 @@ async Task OnClientCreated(int userId)
 server.OnUserAccepted += OnClientCreated;
 async Task ServerSide()
 {
-    await server.HostServer();
+    await server.HostServer(Settings.IpAddress);
 }
 void OnDataRead(string text)
 {
-    //string text = System.Text.Encoding.UTF8.GetString(bytes, 0, bytes.Length);
     Console.WriteLine(text);
 }
 async Task ClientSide()
 {
     Client client = new();
     client.OnDataRead += OnDataRead;
-    client.Connect("127.0.0.1");
+    client.Connect(Settings.IpAddress);
     var _ = client.ReadData();
     while (true)
     {

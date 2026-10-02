@@ -1,17 +1,15 @@
 using System.Net;
 using System.Net.Sockets;
-using System.IO.Pipelines;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using System.Text;
 namespace Chat;
 
 public class Server
 {
-    public event System.Action<byte[]> OnDataSent;
+    public event Action<byte[]> OnDataSent;
+
     ///<doc>
     ///Pass user ID as int in "Invoke". Mainly used for server messages, displaying user ID.
-    public event System.Func<int, Task> OnUserAccepted;
+    public event Func<int, Task> OnUserAccepted;
     private TcpListener? tcpListener;
     private List<TcpClient> connectedClients = new();
     private Dictionary<int, TcpClient> clientIDs = new();
@@ -19,11 +17,11 @@ public class Server
 
     private int userCount = 0;
 
-    public async Task HostServer()
+    public async Task HostServer(string ipAddressString)
     {
         try
         {
-            IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+            IPAddress ipAddress = IPAddress.Parse(ipAddressString);
             tcpListener = new TcpListener(ipAddress, 8000);
 
             tcpListener.Start();
