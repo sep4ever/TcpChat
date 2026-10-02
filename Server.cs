@@ -22,8 +22,7 @@ public class Server
         try
         {
             IPAddress ipAddress = IPAddress.Parse(ipAddressString);
-            tcpListener = new TcpListener(ipAddress, 8000);
-
+            tcpListener = new TcpListener(IPAddress.Any, Settings.Port);
             tcpListener.Start();
 
             while (true)

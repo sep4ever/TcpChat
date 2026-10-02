@@ -22,7 +22,9 @@ async Task ClientSide()
 {
     Client client = new();
     client.OnDataRead += OnDataRead;
-    client.Connect(Settings.IpAddress);
+    Console.WriteLine("Enter IP address:");
+    string ipAddress = Console.ReadLine();
+    client.Connect(ipAddress);
     var _ = client.ReadData();
     while (true)
     {

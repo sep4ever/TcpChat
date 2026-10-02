@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 namespace Chat;
@@ -9,7 +10,7 @@ public class Client
     public void Connect(string address)
     {
         client = new TcpClient();
-        client.Connect(address, 8000);
+        client.Connect(address, Settings.Port);
     }
 
     public async Task SendData(string message)

@@ -8,8 +8,8 @@ public static class Settings
         ':',
         '\n'
     };
-    private static string ipAddress = "127.0.0.1";
+    private static int port = 8000;
     public static char EndSymbol => endSymbol;
     public static char[] ProhibitedSymbols => prohibitedSymbols;
-    public static string IpAddress => ipAddress;
+    public static int Port => port;
 }
