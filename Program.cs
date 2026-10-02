@@ -12,7 +12,7 @@ async Task OnClientCreated(int userId)
 server.OnUserAccepted += OnClientCreated;
 async Task ServerSide()
 {
-    await server.HostServer(Settings.IpAddress);
+    await server.HostServer();
 }
 void OnDataRead(string text)
 {
@@ -24,6 +24,8 @@ async Task ClientSide()
     client.OnDataRead += OnDataRead;
     Console.WriteLine("Enter IP address:");
     string ipAddress = Console.ReadLine();
+    Console.WriteLine("Enter other user id(empty to skip):");
+    string userId = Console.ReadLine();
     client.Connect(ipAddress);
     var _ = client.ReadData();
     while (true)

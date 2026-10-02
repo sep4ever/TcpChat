@@ -17,11 +17,10 @@ public class Server
 
     private int userCount = 0;
 
-    public async Task HostServer(string ipAddressString)
+    public async Task HostServer()
     {
         try
         {
-            IPAddress ipAddress = IPAddress.Parse(ipAddressString);
             tcpListener = new TcpListener(IPAddress.Any, Settings.Port);
             tcpListener.Start();
 
