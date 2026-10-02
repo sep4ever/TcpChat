@@ -8,25 +8,88 @@ namespace Chat;
 
 public class Server
 {
+    public event System.Action<byte[]> OnDataSent;
+    ///<doc>
+    ///Pass user ID as int in "Invoke". Mainly used for server messages, displaying user ID.
+    public event System.Func<int, Task> OnUserAccepted;
     private TcpListener? tcpListener;
     private List<TcpClient> connectedClients = new();
     private Dictionary<int, TcpClient> clientIDs = new();
+    private Dictionary<string, TcpClient> userNames = new();
+
+    private int userCount = 0;
+
     public async Task HostServer()
     {
-        IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
-        tcpListener = new TcpListener(ipAddress, 8000);
-
-        tcpListener.Start();
-
-        while (true)
+        try
         {
-            TcpClient tcpClient = await tcpListener.AcceptTcpClientAsync();
-            lock (connectedClients)
-                connectedClients.Add(tcpClient);
-            lock (clientIDs)
-                clientIDs.Add(connectedClients.Count, tcpClient);
+            IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+            tcpListener = new TcpListener(ipAddress, 8000);
 
-            var _ = ReadData(tcpClient);
+            tcpListener.Start();
+
+            while (true)
+            {
+                TcpClient tcpClient = await tcpListener.AcceptTcpClientAsync();
+                lock (connectedClients)
+                    connectedClients.Add(tcpClient);
+                lock (clientIDs)
+                {
+                    clientIDs.Add(Interlocked.Increment(ref userCount), tcpClient);
+                    OnUserAccepted?.Invoke(userCount);
+                }
+
+                var _ = ReadData(tcpClient);
+            }
+        }
+        catch (SocketException exc)
+        {
+            Console.WriteLine(exc.Message);
+        }
+    }
+
+    public bool SetUserName(TcpClient client, string newName)
+    {
+        if (!ValidUserName(newName))
+            return false;
+        lock (userNames)
+        {
+            if (!userNames.TryGetValue(newName, out TcpClient _))
+            {
+                userNames.Add(newName, client);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    private bool ValidUserName(string userName)
+    {
+        if (Settings.ProhibitedSymbols.ContainsAny(userName))
+            return false;
+        return true;
+    }
+
+    public async Task SendData(byte[] data, int userId)
+    {
+        try
+        {
+            NetworkStream stream;
+            lock (clientIDs)
+            {
+                if (clientIDs.TryGetValue(userId, out var client))
+                    stream = client.GetStream();
+                else
+                    return;
+            }
+            await stream.WriteAsync(data, 0, data.Length);
+        }
+        catch (SocketException exc)
+        {
+            Console.WriteLine(exc.Message);
         }
     }
 
@@ -51,7 +114,8 @@ public class Server
                 continue;
 
             byte[] data = Encoding.UTF8.GetBytes(message);
-            await target.GetStream().WriteAsync(data);
+            OnDataSent?.Invoke(data);
+            await target.GetStream().WriteAsync(data, 0, data.Length);
             //Console.WriteLine($"Client {clientIDs.FirstOrDefault(c => c.Value == client).Key} sent: " + text);
         }
     }

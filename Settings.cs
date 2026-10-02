@@ -1,9 +1,14 @@
 namespace Chat;
 
-struct Settings
+public static class Settings
 {
-    public Settings(){}
-    private char endSymbol = '\n';
+    private static char endSymbol = '\n';
+    private static char[] prohibitedSymbols =
+    {
+        ':',
+        '\n'
+    };
 
-    public char EndSymbol => endSymbol;
+    public static char EndSymbol => endSymbol;
+    public static char[] ProhibitedSymbols => prohibitedSymbols;
 }
