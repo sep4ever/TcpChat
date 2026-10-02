@@ -13,7 +13,7 @@ public class Server
     private TcpListener? tcpListener;
     private List<TcpClient> connectedClients = new();
     private Dictionary<int, TcpClient> clientIDs = new();
-    private Dictionary<string, TcpClient> userNames = new();
+    private Dictionary<int, string> userNames = new();
 
     private int userCount = 0;
 
@@ -35,7 +35,7 @@ public class Server
                     OnUserAccepted?.Invoke(userCount);
                 }
 
-                var _ = ReadData(tcpClient);
+                var _ = ReadData(tcpClient, userCount);
             }
         }
         catch (SocketException exc)
@@ -44,20 +44,28 @@ public class Server
         }
     }
 
-    public bool SetUserName(TcpClient client, string newName)
+    public bool CheckValidId(int id)
+    {
+        lock (clientIDs)
+            return clientIDs.TryGetValue(id, out TcpClient _);
+    }
+
+    public bool SetUserName(int clientId, string newName)
     {
         if (!ValidUserName(newName))
             return false;
         lock (userNames)
         {
-            if (!userNames.TryGetValue(newName, out TcpClient _))
+            if (!userNames.TryGetValue(clientId, out var _))
             {
-                userNames.Add(newName, client);
+                userNames.Add(clientId, newName);
                 return true;
             }
             else
             {
-                return false;
+                userNames.Remove(clientId);
+                userNames.Add(clientId, newName);
+                return true;
             }
         }
     }
@@ -89,10 +97,10 @@ public class Server
         }
     }
 
-    public async Task ReadData(TcpClient client)
+    public async Task ReadData(TcpClient client, int senderId)
     {
         NetworkStream stream = client.GetStream();
-        NetworkStream targetStream;
+
         var bytes = new byte[256];
 
         while (true)
@@ -100,19 +108,28 @@ public class Server
             int count = await stream.ReadAsync(bytes);
             if (count == 0)
                 break;
+
             string text = Encoding.UTF8.GetString(bytes, 0, count);
+            TcpClient? target;
+
+            if (text.StartsWith(Settings.SetNameCommand))
+            {
+                string newName = text.Substring(Settings.SetNameCommand.Length).Trim();
+                SetUserName(senderId, newName);
+                continue;
+            }
+
             if (!TryParseId(text, out int id, out string message))
                 continue;
-            TcpClient? target;
             lock (clientIDs)
                 clientIDs.TryGetValue(id, out target);
             if (target == null)
                 continue;
-
-            byte[] data = Encoding.UTF8.GetBytes(message);
+            string userName = "";
+            userNames.TryGetValue(senderId, out userName);
+            byte[] data = Encoding.UTF8.GetBytes($"{userName}:{message}");
             OnDataSent?.Invoke(data);
             await target.GetStream().WriteAsync(data, 0, data.Length);
-            //Console.WriteLine($"Client {clientIDs.FirstOrDefault(c => c.Value == client).Key} sent: " + text);
         }
     }
 
@@ -120,11 +137,11 @@ public class Server
     {
         id = 0;
         message = "";
-        int colon = text.IndexOf(':');
-        if (colon == -1)
+        int idPostfix = text.IndexOf(Settings.IdPostfix);
+        if (idPostfix == -1)
             return false;
-        string idPart = text.Substring(0, colon);
-        message = text.Substring(colon + 1);
+        string idPart = text.Substring(0, idPostfix);
+        message = text.Substring(idPostfix + 1);
         return Int32.TryParse(idPart, out id);
     }
 

@@ -1,10 +1,8 @@
 ﻿using Chat;
 
 Server server = new();
-
 async Task OnClientCreated(int userId)
 {
-    Console.WriteLine(userId);
     string message = $"Welcome to TCP Chat! Your user id is: {userId}. Send it to anyone so they can text you.";
     byte[] data = System.Text.Encoding.UTF8.GetBytes(message);
     await server.SendData(data, userId);
@@ -22,29 +20,44 @@ async Task ClientSide()
 {
     Client client = new();
     client.OnDataRead += OnDataRead;
-    Console.WriteLine("Enter IP address:");
+    Console.Write("Enter IP address (empty for local):");
     string ipAddress = Console.ReadLine();
-    Console.WriteLine("Enter other user id(empty to skip):");
-    string userId = Console.ReadLine();
-    client.Connect(ipAddress);
+    if (ipAddress.Trim() != "")
+        client.Connect(ipAddress);
+    else
+        client.Connect("127.0.0.1");
     var _ = client.ReadData();
+    string prefix = "";
+    SetPrefix(ref prefix);
     while (true)
     {
         string userInput = Console.ReadLine();
-        var sendData = client.SendData(userInput);
-
         if (userInput == "q")
         {
             client.CloseConnection();
             break;
         }
+
+        if (userInput == "CMD_SetPrefix")
+        {
+            SetPrefix(ref prefix);
+            continue;
+        }
+        var sendData = client.SendData(prefix + userInput);
     }
 }
 
-Console.WriteLine("Program mode(s/c): ");
+void SetPrefix(ref string prefix)
+{
+    Console.Write("Enter other user id (empty to skip): ");
+    string userId = Console.ReadLine().Trim();
+    prefix = Int32.TryParse(userId, out _) ? userId + Settings.IdPostfix : "";
+}
+
+Console.Write("Program mode(s/c): ");
 string choice = Console.ReadLine();
 
 if (choice == "s")
     await ServerSide();
 else
-    ClientSide();
+    await ClientSide();
