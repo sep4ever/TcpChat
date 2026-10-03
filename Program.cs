@@ -3,7 +3,7 @@
 Server server = new();
 async Task OnClientCreated(int userId)
 {
-    string message = $"Welcome to TCP Chat! Your user id is: {userId}. Send it to anyone so they can text you.";
+    string message = $"Welcome to TCP Chat! Your user id is: {userId}. Send it to anyone so they can text you. \n";
     byte[] data = System.Text.Encoding.UTF8.GetBytes(message);
     await server.SendData(data, userId);
 }
@@ -38,11 +38,12 @@ async Task ClientSide()
             break;
         }
 
-        if (userInput == "CMD_SetPrefix")
+        if (userInput == "/setprefix")
         {
             SetPrefix(ref prefix);
             continue;
         }
+
         var sendData = client.SendData(prefix + userInput);
     }
 }

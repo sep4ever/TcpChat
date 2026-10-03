@@ -102,7 +102,7 @@ public class Server
         NetworkStream stream = client.GetStream();
 
         var bytes = new byte[256];
-
+        StringBuilder buffer = new();
         while (true)
         {
             int count = await stream.ReadAsync(bytes);
@@ -119,18 +119,38 @@ public class Server
                 continue;
             }
 
-            if (!TryParseId(text, out int id, out string message))
-                continue;
-            lock (clientIDs)
-                clientIDs.TryGetValue(id, out target);
-            if (target == null)
-                continue;
-            string userName = "";
-            userNames.TryGetValue(senderId, out userName);
-            byte[] data = Encoding.UTF8.GetBytes($"{userName}:{message}");
-            OnDataSent?.Invoke(data);
-            await target.GetStream().WriteAsync(data, 0, data.Length);
+            buffer.Append(text);
+            while (TryParseMessage(buffer.ToString(), out string parsedMessage))
+            {
+                buffer.Remove(0, parsedMessage.Length + 1);
+                if (!TryParseId(parsedMessage, out int id, out string message))
+                    continue;
+                lock (clientIDs)
+                    clientIDs.TryGetValue(id, out target);
+                if (target == null)
+                    continue;
+                string userName = "";
+                userNames.TryGetValue(senderId, out userName);
+                byte[] data = Encoding.UTF8.GetBytes($"{userName}:{message}\n");
+                OnDataSent?.Invoke(data);
+                await target.GetStream().WriteAsync(data, 0, data.Length);
+            }
         }
+    }
+
+    private bool TryParseMessage(string message, out string parsedMessage)
+    {
+        if (message.Contains(Settings.EndSymbol))
+        {
+            int messageEndIndex = message.IndexOf(Settings.EndSymbol);
+            if (messageEndIndex > 0)
+            {
+                parsedMessage = message.Substring(0, messageEndIndex);
+                return true;
+            }
+        }
+        parsedMessage = string.Empty;
+        return false;
     }
 
     private bool TryParseId(string text, out int id, out string message)
