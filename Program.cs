@@ -22,9 +22,9 @@ async Task ClientSide()
     string ipAddress = Console.ReadLine();
 
     if (ipAddress.Trim() != "")
-        client.Connect(ipAddress);
+        await client.Connect(ipAddress);
     else
-        client.Connect("127.0.0.1");
+        await client.Connect("127.0.0.1");
     var _ = client.ReadData();
     string prefix = "";
     SetPrefix(ref prefix);

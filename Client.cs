@@ -1,22 +1,38 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Net.Security;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 namespace Chat;
 
 public class Client
 {
     public event Action<string>? OnDataRead;
-    private TcpClient client;
-    public void Connect(string address)
+    private TcpClient? client;
+    private SslStream? stream;
+    public async Task Connect(string address)
     {
         client = new TcpClient();
-        client.Connect(address, Settings.Port);
+        await client.ConnectAsync(address, Settings.Port);
+
+        stream = new SslStream(
+            client.GetStream(),
+            leaveInnerStreamOpen: false
+        );
+        await stream.AuthenticateAsClientAsync(
+            new SslClientAuthenticationOptions
+            {
+                TargetHost = address,
+                EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
+            }
+        );
     }
 
     public async Task SendData(string message)
     {
-        NetworkStream stream = client.GetStream();
-
+        if (stream == null)
+            throw new InvalidOperationException("Not connected to a server!");
         var data = Encoding.UTF8.GetBytes(message + Settings.EndSymbol);
 
         await stream.WriteAsync(data, 0, data.Length);
@@ -24,8 +40,8 @@ public class Client
 
     public async Task ReadData()
     {
-        NetworkStream stream = client.GetStream();
-
+        if (stream == null)
+            throw new InvalidOperationException("Not connected to a server!");
         var bytes = new byte[256];
         StringBuilder buffer = new();
         while (true)
