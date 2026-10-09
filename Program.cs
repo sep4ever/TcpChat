@@ -1,27 +1,26 @@
 ﻿using Chat;
 
 Server server = new();
+server.OnUserAccepted += OnClientCreated;
+
 async Task OnClientCreated(int userId)
 {
     string message = $"Welcome to TCP Chat! Your user id is: {userId}. Send it to anyone so they can text you. \n";
     byte[] data = System.Text.Encoding.UTF8.GetBytes(message);
     await server.SendData(data, userId);
 }
-server.OnUserAccepted += OnClientCreated;
-async Task ServerSide()
-{
-    await server.HostServer();
-}
-void OnDataRead(string text)
-{
-    Console.WriteLine(text);
-}
+
+async Task ServerSide() => await server.HostServer();
+void OnDataRead(string text) => Console.WriteLine(text);
+
 async Task ClientSide()
 {
     Client client = new();
     client.OnDataRead += OnDataRead;
+
     Console.Write("Enter IP address (empty for local):");
     string ipAddress = Console.ReadLine();
+
     if (ipAddress.Trim() != "")
         client.Connect(ipAddress);
     else
