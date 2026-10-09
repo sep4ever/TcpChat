@@ -22,9 +22,9 @@ async Task ClientSide()
     string ipAddress = Console.ReadLine();
 
     if (ipAddress.Trim() != "")
-        await client.Connect(ipAddress);
+        await client.Connect(ipAddress, Settings.FunnelPort, true);
     else
-        await client.Connect("127.0.0.1");
+        await client.Connect("127.0.0.1", Settings.ServerPort);
     var _ = client.ReadData();
     string prefix = "";
     SetPrefix(ref prefix);

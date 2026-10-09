@@ -10,23 +10,31 @@ public class Client
 {
     public event Action<string>? OnDataRead;
     private TcpClient? client;
-    private SslStream? stream;
-    public async Task Connect(string address)
+    private Stream? stream;
+
+    public async Task Connect(string address, int port, bool useTlns = false)
     {
         client = new TcpClient();
-        await client.ConnectAsync(address, Settings.FunnelPort);
+        await client.ConnectAsync(address, port);
 
-        stream = new SslStream(
-            client.GetStream(),
-            leaveInnerStreamOpen: false
-        );
-        await stream.AuthenticateAsClientAsync(
-            new SslClientAuthenticationOptions
-            {
-                TargetHost = address,
-                EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
-            }
-        );
+        NetworkStream networkStream = client.GetStream();
+        if (useTlns)
+        {
+            var sslStream = new SslStream(
+                networkStream,
+                leaveInnerStreamOpen: false
+            );
+            await sslStream.AuthenticateAsClientAsync(
+                new SslClientAuthenticationOptions
+                {
+                    TargetHost = address,
+                    EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13
+                }
+            );
+            stream = sslStream;
+        }
+        else
+            stream = networkStream;
     }
 
     public async Task SendData(string message)
