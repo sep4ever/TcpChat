@@ -12,13 +12,13 @@ public class Client
     private TcpClient? client;
     private Stream? stream;
 
-    public async Task Connect(string address, int port, bool useTlns = false)
+    public async Task Connect(string address, int port, bool useTls = false)
     {
         client = new TcpClient();
         await client.ConnectAsync(address, port);
 
         NetworkStream networkStream = client.GetStream();
-        if (useTlns)
+        if (useTls)
         {
             var sslStream = new SslStream(
                 networkStream,
