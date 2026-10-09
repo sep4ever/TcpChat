@@ -21,7 +21,7 @@ public class Server
     {
         try
         {
-            tcpListener = new TcpListener(IPAddress.Any, Settings.Port);
+            tcpListener = new TcpListener(IPAddress.Any, Settings.ServerPort);
             tcpListener.Start();
 
             while (true)

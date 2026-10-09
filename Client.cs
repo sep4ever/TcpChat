@@ -14,7 +14,7 @@ public class Client
     public async Task Connect(string address)
     {
         client = new TcpClient();
-        await client.ConnectAsync(address, Settings.Port);
+        await client.ConnectAsync(address, Settings.FunnelPort);
 
         stream = new SslStream(
             client.GetStream(),
