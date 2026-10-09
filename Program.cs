@@ -22,7 +22,7 @@ async Task ClientSide()
     string ipAddress = Console.ReadLine();
 
     if (ipAddress.Trim() != "")
-        await client.Connect(ipAddress, Settings.FunnelPort, true);
+        await client.Connect(ipAddress, Settings.FunnelPort);
     else
         await client.Connect("127.0.0.1", Settings.ServerPort);
     var _ = client.ReadData();

@@ -29,11 +29,15 @@ public class Server
                 TcpClient tcpClient = await tcpListener.AcceptTcpClientAsync();
                 lock (connectedClients)
                     connectedClients.Add(tcpClient);
+
+                int userId = Interlocked.Increment(ref userCount);
                 lock (clientIDs)
                 {
-                    clientIDs.Add(Interlocked.Increment(ref userCount), tcpClient);
-                    OnUserAccepted?.Invoke(userCount);
+                    clientIDs.Add(userId, tcpClient);
                 }
+
+                if (OnUserAccepted != null)
+                    await OnUserAccepted.Invoke(userId);
 
                 var _ = ReadData(tcpClient, userCount);
             }
