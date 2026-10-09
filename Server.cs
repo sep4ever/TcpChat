@@ -27,6 +27,7 @@ public class Server
             while (true)
             {
                 TcpClient tcpClient = await tcpListener.AcceptTcpClientAsync();
+
                 lock (connectedClients)
                     connectedClients.Add(tcpClient);
 
@@ -38,7 +39,6 @@ public class Server
 
                 if (OnUserAccepted != null)
                     await OnUserAccepted.Invoke(userId);
-
                 var _ = ReadData(tcpClient, userCount);
             }
         }

@@ -22,12 +22,16 @@ async Task ClientSide()
     string ipAddress = Console.ReadLine();
 
     if (ipAddress.Trim() != "")
-        await client.Connect(ipAddress, Settings.ServerPort);
+        if (ipAddress.Contains("ts.net"))
+        {
+            await client.Connect(ipAddress, Settings.FunnelPort, true); //ts funneling.
+        }
+        else
+            await client.Connect(ipAddress, Settings.ServerPort); //local connection, but local among tailnet devices.
     else
-        await client.Connect("127.0.0.1", Settings.ServerPort);
-    var _ = client.ReadData();
+        await client.Connect("127.0.0.1", Settings.ServerPort); //purely local connection, used on 1 machine.
+    var readData = client.ReadData();
     string prefix = "";
-    SetPrefix(ref prefix);
     while (true)
     {
         string userInput = Console.ReadLine();
