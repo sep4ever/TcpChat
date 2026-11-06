@@ -1,4 +1,6 @@
-﻿using Chat;
+﻿using System.Net.Sockets;
+
+using Chat;
 
 Server server = new();
 server.OnUserAccepted += OnClientCreated;
@@ -15,21 +17,30 @@ void OnDataRead(string text) => Console.WriteLine(text);
 
 async Task ClientSide()
 {
-    Client client = new();
+    Client client = new Client();
     client.OnDataRead += OnDataRead;
 
     Console.Write("Enter IP address (empty for local):");
     string ipAddress = Console.ReadLine();
-
-    if (ipAddress.Trim() != "")
-        if (ipAddress.Contains("ts.net"))
+    string trimmedIp = ipAddress.Trim();
+    if (trimmedIp != "")
+        if (trimmedIp.Contains("ts.net"))
         {
-            await client.Connect(ipAddress, Settings.FunnelPort, true); //ts funneling.
+            try
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2)); //trying to connect within 2 seconds.
+                await client.Connect(trimmedIp, Settings.ServerPort, false, cts.Token);
+            }
+            catch (Exception e) when (e is OperationCanceledException or SocketException) //on fail connecting via funnel.
+            {
+                client = new Client();
+                await client.Connect(trimmedIp, Settings.FunnelPort, true); //funneling.
+            }
         }
         else
-            await client.Connect(ipAddress, Settings.ServerPort); //local connection, but local among tailnet devices.
+            await client.Connect(trimmedIp, Settings.ServerPort);
     else
-        await client.Connect("127.0.0.1", Settings.ServerPort); //purely local connection, used on 1 machine.
+        await client.Connect("127.0.0.1", Settings.ServerPort); //local connection, testing purposes, fallback.
     var readData = client.ReadData();
     string prefix = "";
     while (true)

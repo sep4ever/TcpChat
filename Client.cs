@@ -12,10 +12,10 @@ public class Client
     private TcpClient? client;
     private Stream? stream;
 
-    public async Task Connect(string address, int port, bool useTls = false)
+    public async Task Connect(string address, int port, bool useTls = false, CancellationToken ct = default)
     {
         client = new TcpClient();
-        await client.ConnectAsync(address, port);
+        await client.ConnectAsync(address, port, ct);
 
         NetworkStream networkStream = client.GetStream();
         if (useTls)
