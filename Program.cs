@@ -1,5 +1,5 @@
 ﻿using System.Net.Sockets;
-
+using System.Threading;
 using Chat;
 
 Server server = new();
@@ -18,7 +18,6 @@ void OnDataRead(string text) => Console.WriteLine(text);
 async Task ClientSide()
 {
     Client client = new Client();
-    client.OnDataRead += OnDataRead;
 
     Console.Write("Enter IP address (empty for local):");
     string ipAddress = Console.ReadLine();
@@ -41,6 +40,7 @@ async Task ClientSide()
             await client.Connect(trimmedIp, Settings.ServerPort);
     else
         await client.Connect("127.0.0.1", Settings.ServerPort); //local connection, testing purposes, fallback.
+    client.OnDataRead += OnDataRead;
     var readData = client.ReadData();
     string prefix = "";
     while (true)
